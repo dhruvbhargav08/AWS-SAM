@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Resources:
+  MyBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: 'dhruv-bhargav-bucket'
+
+  MyTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      TopicName: 'MyNotificationTopic'
+
+  MyTopicSubscription:
+    Type: 'AWS::SNS::Subscription'
+    Properties:
+      TopicArn: !Ref MyTopic
+      Protocol: 'email'
+      Endpoint: 'bhargavdhruv2001@gmail.com'
+
+  MyFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: 'app.lambda_handler'
+      Runtime: 'python3.9'
+      CodeUri: hello_world/
+      Environment:
+        Variables:
+          TOPIC_ARN: !Ref MyTopic
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            Effect: Allow
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 'sns:Publish'
+            Resource:
+              - '*'
+              - '*'
+              - !Ref MyTopic
+      Events:
+        S3UploadEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref MyBucket
+            Events: s3:ObjectCreated:*
+
